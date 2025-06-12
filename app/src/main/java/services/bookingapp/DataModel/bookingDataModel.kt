@@ -1,0 +1,40 @@
+package services.bookingapp.DataModel
+
+import com.google.firebase.auth.PhoneAuthProvider
+
+// Enhanced Data Models
+data class FeaturedEvent(
+    val id: String = "",
+    val title: String = "",
+    val location: String = "",
+    val date: String = "",
+    val imageUrl: String = ""
+)
+
+data class Event(
+    val id: String = "",
+    val title: String = "",
+    val location: String = "",
+    val datetime: String = "",
+    val price: String = "",
+    val category: String = ""
+)
+
+data class UiState(
+    val loading: Boolean = false,
+    val success: Boolean = false,
+    val error: String? = null,
+    val verificationId: String? = null,
+    val resendToken: PhoneAuthProvider.ForceResendingToken? = null
+)
+
+data class User(
+    val uid: String = "",
+    val email: String = "",
+    val name: String = "",
+    val phone: String = "",
+    val area: String = "",
+    val budget: String = "",
+    val preferences: List<String> = emptyList(),
+    val isFirstLogin: Boolean = true
+)
