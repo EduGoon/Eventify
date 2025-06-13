@@ -35,6 +35,5 @@ data class User(
     val phone: String = "",
     val area: String = "",
     val budget: String = "",
-    val preferences: List<String> = emptyList(),
     val isFirstLogin: Boolean = true
 )

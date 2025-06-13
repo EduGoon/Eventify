@@ -37,6 +37,10 @@ class BookingViewModel @Inject constructor() : ViewModel() {
 
     private val _currentUser = MutableStateFlow<User?>(null)
 
+    fun setLoading(){
+        _uiState.value = UiState(loading = true)
+    }
+
     fun setSuccess() {
         _uiState.value = UiState(success = true)
     }
@@ -52,6 +56,7 @@ class BookingViewModel @Inject constructor() : ViewModel() {
         phone: String,
         onResult: (Boolean) -> Unit
     ) {
+        setLoading()
         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = auth.currentUser
@@ -75,8 +80,8 @@ class BookingViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-
     fun loginWithEmail(email: String, password: String, onResult: (Boolean) -> Unit) {
+        setLoading()
         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 _authState.value = true
@@ -92,6 +97,7 @@ class BookingViewModel @Inject constructor() : ViewModel() {
     }
 
     fun signInWithGoogle(idToken: String, onResult: (Boolean) -> Unit) {
+        setLoading()
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).addOnCompleteListener { task ->
             if (task.isSuccessful) {
@@ -112,7 +118,7 @@ class BookingViewModel @Inject constructor() : ViewModel() {
     private fun checkAndCreateUserIfNeeded(uid: String, email: String, name: String, phone: String, onComplete: (Boolean) -> Unit) {
         firestore.collection("users").document(uid).get().addOnSuccessListener { document ->
             if (!document.exists()) {
-                val user = User(uid, email, name, phone, "", "", emptyList(), isFirstLogin = true)
+                val user = User(uid, email, name, phone, "", "", isFirstLogin = true)
                 saveUserToFirestore(user, onComplete)
             } else {
                 onComplete(true)
