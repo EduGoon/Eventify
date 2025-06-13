@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalBar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -39,8 +38,6 @@ import androidx.compose.material.icons.filled.TheaterComedy
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -71,10 +68,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
@@ -129,7 +124,7 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                         ) {
                             Column {
                                 Text(
-                                    text = if (name.isNotBlank()) "Hello, $name! 👋" else "Welcome Back!",
+                                    text = if (name.isNotBlank()) "$name"  else "",
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
@@ -161,9 +156,6 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
-
-                                // Enhanced notification badge
-                                EnhancedNotificationBadge()
                             }
                         }
 
@@ -188,14 +180,17 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
 
+                var selected = ""
                 // Quick filters
-                QuickFiltersSection()
+                QuickFiltersSection(onSelect = {
+                    selectedFilter -> selected = selectedFilter
+                })
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Featured Events with enhanced design
                 SectionHeader(
-                    title = "🌟 Featured Events",
+                    title = "🌟 Suggested Events",
                     subtitle = "Don't miss out on these amazing experiences"
                 )
 
@@ -204,25 +199,15 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
                 ) {
                     items(4) { index ->
-                        EnhancedFeaturedEventCard(index)
+                        EnhancedSuggestedEventCard(index)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Categories section
-                SectionHeader(
-                    title = "🎯 Browse Categories",
-                    subtitle = "Find events that match your interests"
-                )
-
-                CategoryGrid()
-
-                Spacer(modifier = Modifier.height(32.dp))
-
                 // Upcoming Events with better design
                 SectionHeader(
-                    title = "📅 Upcoming Near You",
+                    title = "📅 Upcoming ${selected} Near You",
                     subtitle = "Events happening in your area"
                 )
 
@@ -242,13 +227,12 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
             FirstTimePopupForm(
                 show = showOnboarding,
                 onDismiss = { viewModel.setFirstTime(false) },
-                onSubmit = { area, budget, preferences ->
+                onSubmit = { area, budget ->
                     uid?.let {
                         FirebaseFirestore.getInstance().collection("users").document(it).update(
                             mapOf(
                                 "area" to area,
                                 "budget" to budget,
-                                "preferences" to preferences,
                                 "isFirstLogin" to false
                             )
                         )
@@ -309,7 +293,7 @@ fun ModernSearchBar(
 }
 
 @Composable
-fun QuickFiltersSection() {
+fun QuickFiltersSection(onSelect: (String) -> Unit) {
     val filters = listOf("🎵 Music", "🏃 Sports", "🍕 Food", "🎨 Art", "💼 Business", "🎭 Theater")
     var selectedFilter by remember { mutableStateOf<String?>(null) }
 
@@ -322,6 +306,7 @@ fun QuickFiltersSection() {
                 selected = selectedFilter == filter,
                 onClick = {
                     selectedFilter = if (selectedFilter == filter) null else filter
+                    onSelect(selectedFilter.toString())
                 },
                 label = {
                     Text(
@@ -364,57 +349,7 @@ fun SectionHeader(title: String, subtitle: String) {
 }
 
 @Composable
-fun CategoryGrid() {
-    val categories = listOf(
-        "🎵" to "Music",
-        "🏃" to "Sports",
-        "🍕" to "Food & Drink",
-        "🎨" to "Arts & Culture",
-        "💼" to "Business",
-        "🎭" to "Theater"
-    )
-
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp)
-    ) {
-        items(categories) { (emoji, name) ->
-            Card(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clickable { /* Navigate to category */ },
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = emoji,
-                        fontSize = 36.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = name,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EnhancedFeaturedEventCard(index: Int) {
+fun EnhancedSuggestedEventCard(index: Int) {
     val eventTitles = listOf("Summer Music Festival", "Tech Conference 2024", "Food & Wine Expo", "Art Gallery Opening")
     val eventLocations = listOf("Central Park", "Convention Center", "Downtown Plaza", "Art District")
     val eventDates = listOf("Dec 25", "Jan 15", "Feb 20", "Mar 10")
@@ -456,7 +391,7 @@ fun EnhancedFeaturedEventCard(index: Int) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     AssistChip(
-                        onClick = { /* Optional action */ },
+                        onClick = {},
                         label = {
                             Text("Featured", style = MaterialTheme.typography.bodySmall)
                         },
@@ -467,7 +402,7 @@ fun EnhancedFeaturedEventCard(index: Int) {
                         )
                     )
 
-                    IconButton(onClick = { /* Add to favorites */ }) {
+                    IconButton(onClick = {}) {
                         Icon(
                             Icons.Default.Favorite,
                             contentDescription = "Favorite",
@@ -658,62 +593,25 @@ fun EnhancedEventCard(index: Int) {
 }
 
 @Composable
-fun EnhancedNotificationBadge() {
-    var notificationCount by remember { mutableStateOf(3) }
-
-    BadgedBox(
-        badge = {
-            if (notificationCount > 0) {
-                Badge(
-                    containerColor = Color.Red,
-                    contentColor = Color.White
-                ) {
-                    Text(
-                        text = if (notificationCount > 9) "9+" else notificationCount.toString(),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-            }
-        }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.2f))
-                .clickable { /* Open notifications */ },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Default.Notifications,
-                contentDescription = "Notifications",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
-@Composable
 fun FirstTimePopupForm(
     show: Boolean,
     onDismiss: () -> Unit,
-    onSubmit: (area: String, budget: String, preferences: List<String>) -> Unit
+    onSubmit: (area: String, budget: String) -> Unit
 ) {
     if (!show) return
 
     var area by remember { mutableStateOf("") }
     var budget by remember { mutableStateOf("") }
-    var preferencesText by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Complete Your Profile") },
+        title = { Text("Complete Your Profile to improve our suggestions") },
         text = {
             Column {
                 OutlinedTextField(
                     value = area,
                     onValueChange = { area = it },
-                    label = { Text("Area") },
+                    label = { Text("Area of Residence") },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -724,18 +622,11 @@ fun FirstTimePopupForm(
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = preferencesText,
-                    onValueChange = { preferencesText = it },
-                    label = { Text("Preferences (comma-separated)") },
-                    singleLine = true
-                )
             }
         },
         confirmButton = {
             Button(onClick = {
-                val preferences = preferencesText.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                onSubmit(area, budget, preferences)
+                onSubmit(area, budget)
                 onDismiss()
             }) {
                 Text("Submit")

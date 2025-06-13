@@ -25,23 +25,18 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,8 +44,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -58,10 +51,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.yourapp.booking.viewmodel.BookingViewModel
 
@@ -140,7 +135,7 @@ fun LandingPage(navController: NavHostController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp)
+                .padding(12.dp)
                 .systemBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -149,8 +144,7 @@ fun LandingPage(navController: NavHostController) {
             // Hero Section with floating animation
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .offset(y = floatingAnimation.dp),
+                    .weight(1f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -188,24 +182,17 @@ fun LandingPage(navController: NavHostController) {
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontSize = 56.sp,
                         fontWeight = FontWeight.Bold,
-                        letterSpacing = (-1).sp
-                    ),
-                    color = Color.White,
-                    modifier = Modifier
-                        .drawWithContent {
-                            drawContent()
-                            drawRect(
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = 0.8f),
-                                        Color.White,
-                                        Color.White.copy(alpha = 0.8f)
-                                    )
-                                ),
-                                blendMode = BlendMode.SrcIn
+                        letterSpacing = (-1).sp,
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Blue,
+                                Color.Cyan,
+                                Color.Magenta
                             )
-                        }
+                        )
+                    )
                 )
+
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -248,7 +235,7 @@ fun LandingPage(navController: NavHostController) {
                     ) {
                         Column {
                             Text(
-                                text = "New to BookingApp?",
+                                text = "New to Eventify?",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.White.copy(alpha = 0.8f)
                             )
@@ -419,70 +406,65 @@ fun SocialAuthButtons(
         }
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp), // Optional: add some side padding
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Google Sign In Button
-        OutlinedButton(
-            onClick = {
-                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken("1002676602075-uc8iv3mq30fm0cjr6edv6s7emb0e0ulr.apps.googleusercontent.com")
-                    .requestEmail()
-                    .build()
-
-                val googleSignInClient = GoogleSignIn.getClient(context, gso)
-                googleSignInClient.signOut().addOnCompleteListener {
-                    val signInIntent = googleSignInClient.signInIntent
-                    launcher.launch(signInIntent)
+        if (uiState.loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.5.dp,
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Signing in...",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
                 }
-            },
-            modifier = Modifier
-                .weight(1f)
-                .height(48.dp),
-            enabled = !uiState.loading,
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            if (uiState.loading) {
-                CircularProgressIndicator(
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(18.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Icon(
-                    Icons.Default.Mail,
-                    contentDescription = "Google",
-                    modifier = Modifier.size(18.dp),
-                    tint = Color(0xFFDB4437) // Google red
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Google")
             }
+        } else {
+            AndroidView(
+                factory = { context ->
+                    SignInButton(context).apply {
+                        setSize(SignInButton.SIZE_WIDE)
+                        setColorScheme(SignInButton.COLOR_LIGHT)
+                        setOnClickListener {
+                            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                .requestIdToken("1002676602075-uc8iv3mq30fm0cjr6edv6s7emb0e0ulr.apps.googleusercontent.com")
+                                .requestEmail()
+                                .build()
+
+                            val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                            googleSignInClient.signOut().addOnCompleteListener {
+                                val signInIntent = googleSignInClient.signInIntent
+                                launcher.launch(signInIntent)
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            )
         }
 
-        // Facebook Sign In Button (Placeholder)
-        OutlinedButton(
-            onClick = {},
-            modifier = Modifier
-                .weight(1f)
-                .height(48.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.onSurface
-            )
-        ) {
-            Icon(
-                Icons.Default.ThumbUp,
-                contentDescription = "Facebook",
-                modifier = Modifier.size(18.dp),
-                tint = Color(0xFF1877F2) // Facebook blue
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Facebook")
-        }
+        //Other social buttons can be added here
+
     }
 }
