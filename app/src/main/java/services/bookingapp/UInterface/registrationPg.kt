@@ -1,6 +1,10 @@
 package services.bookingapp.UInterface
 
+import android.app.Activity
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -45,6 +49,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,8 +81,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.SignInButton
+import com.google.android.gms.common.api.ApiException
 import com.yourapp.booking.viewmodel.BookingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,7 +113,7 @@ fun RegistrationPage(
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
             navController.navigate("home"){
-                popUpTo("landing") { inclusive = true }
+                popUpTo(0) { inclusive = true }
             }
             viewModel.resetState()
         }
@@ -412,6 +422,28 @@ fun RegistrationPage(
                 }
             }
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "  Or continue with  ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+            }
+
+            SocialAuthButtons(navController, viewModel())
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -467,4 +499,106 @@ private fun EnhancedTextField(
             cursorColor = MaterialTheme.colorScheme.primary
         )
     )
+}
+
+@Composable
+fun SocialAuthButtons(
+    navController: NavHostController,
+    viewModel: BookingViewModel
+) {
+    val uiState by viewModel.uiState
+
+    LaunchedEffect(uiState.success) {
+        if (uiState.success) {
+            // Let MainApp's authFlow take over — just trigger the state update
+            viewModel.checkUserSessionAndFirstTime()
+            viewModel.resetState()
+        }
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        try {
+            if (result.resultCode != Activity.RESULT_OK) {
+                Log.d("GoogleSignIn", "Cancelled or resultCode=${result.resultCode}")
+                return@rememberLauncherForActivityResult
+            }
+
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.getResult(ApiException::class.java)
+            val idToken = account.idToken
+            if (idToken != null) {
+                viewModel.signInWithGoogle(idToken) {}
+            } else {
+                Log.e("GoogleSignIn", "Missing idToken: ${account?.email ?: "No email"}")
+            }
+        } catch (e: ApiException) {
+            Log.e("GoogleSignIn", "Google API error (${e.statusCode})", e)
+        } catch (t: Throwable) {
+            Log.e("GoogleSignIn", "Unhandled launcher error", t)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp), // Optional: add some side padding
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (uiState.loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.5.dp,
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Signing in...",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
+            }
+        } else {
+            AndroidView(
+                factory = { context ->
+                    SignInButton(context).apply {
+                        setSize(SignInButton.SIZE_WIDE)
+                        setColorScheme(SignInButton.COLOR_LIGHT)
+                        setOnClickListener {
+                            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                                .requestIdToken("1002676602075-uc8iv3mq30fm0cjr6edv6s7emb0e0ulr.apps.googleusercontent.com")
+                                .requestEmail()
+                                .build()
+
+                            val googleSignInClient = GoogleSignIn.getClient(context, gso)
+                            googleSignInClient.signOut().addOnCompleteListener {
+                                val signInIntent = googleSignInClient.signInIntent
+                                launcher.launch(signInIntent)
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            )
+        }
+
+        //Other social buttons can be added here
+
+    }
 }

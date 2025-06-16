@@ -42,6 +42,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -98,7 +99,7 @@ fun AuthPage(
         if (uiState.success) {
             delay(300)
             navController.navigate("home") {
-                popUpTo("landing") { inclusive = true }
+                popUpTo(0) { inclusive = true }
             }
             viewModel.resetState()
         }
@@ -400,13 +401,65 @@ fun AuthPage(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sign Up Redirect
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Don't have an account? ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                TextButton(
+                    onClick = { navController.navigate("register") }
+                ) {
+                    Text(
+                        text = "Sign Up",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+                Text(
+                    text = "  Or continue with  ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Alternative Login Methods
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
+                //This SocialAuthButtons composable is found in RegistrationPage
+                SocialAuthButtons(navController, viewModel())
+
                 // Phone Authentication Button
                 OutlinedButton(
                     onClick = { navController.navigate("phoneAuth") },
@@ -436,30 +489,6 @@ fun AuthPage(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Sign Up Redirect
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Don't have an account? ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                TextButton(
-                    onClick = { navController.navigate("register") }
-                ) {
-                    Text(
-                        text = "Sign Up",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
         }
     }
 }

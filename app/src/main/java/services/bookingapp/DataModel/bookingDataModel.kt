@@ -20,6 +20,13 @@ data class Event(
     val category: String = ""
 )
 
+data class AuthFlowState(
+    val isLoggedIn: Boolean = false,
+    val isFirstTime: Boolean = false,
+    val checked: Boolean = false // ✅ Add this
+)
+
+
 data class UiState(
     val loading: Boolean = false,
     val success: Boolean = false,
@@ -33,7 +40,8 @@ data class User(
     val email: String = "",
     val name: String = "",
     val phone: String = "",
-    val area: String = "",
-    val budget: String = "",
+    val bio: String = "",
+    val address: String = "",
     val isFirstLogin: Boolean = true
 )
+
