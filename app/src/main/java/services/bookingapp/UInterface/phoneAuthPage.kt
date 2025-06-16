@@ -39,8 +39,8 @@ fun PhoneAuthPage(
 
     if (uiState.success) {
         LaunchedEffect(true) {
-            navController.navigate("homePg") {
-                popUpTo("landingPg") { inclusive = true }
+            navController.navigate("home") {
+                popUpTo(0) { inclusive = true }
             }
         }
     }

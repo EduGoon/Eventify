@@ -52,7 +52,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,14 +67,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.yourapp.booking.viewmodel.BookingViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,9 +84,11 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     val scrollState = rememberScrollState()
 
+    val user by viewModel.currentUser.collectAsState()
+
     LaunchedEffect(uid) {
         if (uid != null) {
-            viewModel.checkIfFirstTime(uid)
+            viewModel.fetchUserData(uid, {})
             viewModel.fetchCurrentUserName { resultName ->
                 name = resultName ?: ""
             }
@@ -116,7 +117,6 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                 ) {
                     Column {
-                        // Header with greeting and notifications
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -124,7 +124,7 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                         ) {
                             Column {
                                 Text(
-                                    text = if (name.isNotBlank()) "$name"  else "",
+                                    text = if (name.isNotBlank()) "$name" else "",
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
@@ -140,7 +140,6 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Profile Avatar
                                 Box(
                                     modifier = Modifier
                                         .size(42.dp)
@@ -161,7 +160,6 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        // Modern search bar
                         ModernSearchBar(
                             query = searchQuery,
                             onQueryChange = { searchQuery = it },
@@ -181,14 +179,13 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                 Spacer(modifier = Modifier.height(20.dp))
 
                 var selected = ""
-                // Quick filters
-                QuickFiltersSection(onSelect = {
-                    selectedFilter -> selected = selectedFilter
+
+                QuickFiltersSection(onSelect = { selectedFilter ->
+                    selected = selectedFilter
                 })
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Featured Events with enhanced design
                 SectionHeader(
                     title = "🌟 Suggested Events",
                     subtitle = "Don't miss out on these amazing experiences"
@@ -205,9 +202,8 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Upcoming Events with better design
                 SectionHeader(
-                    title = "📅 Upcoming ${selected} Near You",
+                    title = "📅 Upcoming $selected Near You",
                     subtitle = "Events happening in your area"
                 )
 
@@ -220,26 +216,20 @@ fun HomePage(navController: NavController, viewModel: BookingViewModel = viewMod
                     }
                 }
 
-                Spacer(modifier = Modifier.height(100.dp)) // Bottom padding
+                Spacer(modifier = Modifier.height(100.dp))
             }
 
-            val showOnboarding = viewModel.isFirstTime.collectAsState().value
+            // ✅ This handles showing the FirstTimePopupForm correctly
+            val showOnboarding = user?.isFirstLogin == true
             FirstTimePopupForm(
                 show = showOnboarding,
                 onDismiss = { viewModel.setFirstTime(false) },
                 onSubmit = { area, budget ->
                     uid?.let {
-                        FirebaseFirestore.getInstance().collection("users").document(it).update(
-                            mapOf(
-                                "area" to area,
-                                "budget" to budget,
-                                "isFirstLogin" to false
-                            )
-                        )
+                        viewModel.updateUserProfile(it, area, budget) {}
                     }
                 }
             )
-
         }
     }
 }
@@ -603,38 +593,70 @@ fun FirstTimePopupForm(
     var area by remember { mutableStateOf("") }
     var budget by remember { mutableStateOf("") }
 
+    val allFieldsFilled = area.isNotBlank() && budget.isNotBlank()
+
     AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Complete Your Profile to improve our suggestions") },
+        onDismissRequest = {}, // Prevent dismissing without completing
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "🌟 Complete Your Profile",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    "We use this info to give you better recommendations.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
         text = {
-            Column {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+            ) {
                 OutlinedTextField(
                     value = area,
                     onValueChange = { area = it },
                     label = { Text("Area of Residence") },
-                    singleLine = true
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = budget,
-                    onValueChange = { budget = it },
-                    label = { Text("Budget") },
-                    singleLine = true
+                    onValueChange = { input ->
+                        // Allow only numeric input
+                        if (input.all { it.isDigit() || it == '.' }) {
+                            budget = input
+                        }
+                    },
+                    label = { Text("Budget (USD)") },
+                    leadingIcon = {
+                        Text("$", style = MaterialTheme.typography.bodyLarge)
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onSubmit(area, budget)
-                onDismiss()
-            }) {
-                Text("Submit")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+            Button(
+                onClick = {
+                    onSubmit(area.trim(), budget.trim())
+                    onDismiss()
+                },
+                enabled = allFieldsFilled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Continue")
             }
         }
     )

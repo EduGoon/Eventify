@@ -1,9 +1,12 @@
 package com.yourapp.booking.viewmodel
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
@@ -11,10 +14,14 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.ktx.toObject
 import com.yourapp.booking.viewmodel.BookingViewModel.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import services.bookingapp.DataModel.AuthFlowState
 import services.bookingapp.DataModel.UiState
 import services.bookingapp.DataModel.User
 import java.util.concurrent.TimeUnit
@@ -35,7 +42,11 @@ class BookingViewModel @Inject constructor() : ViewModel() {
     private val _isFirstTime = MutableStateFlow(false)
     val isFirstTime: StateFlow<Boolean> = _isFirstTime
 
+    private val _authFlowState = MutableStateFlow(AuthFlowState())
+    val authFlowState: StateFlow<AuthFlowState> = _authFlowState
+
     private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser
 
     fun setLoading(){
         _uiState.value = UiState(loading = true)
@@ -93,7 +104,15 @@ class BookingViewModel @Inject constructor() : ViewModel() {
     }
 
     fun setFirstTime(value: Boolean) {
-        _isFirstTime.value = value
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        Firebase.firestore.collection("users").document(uid)
+            .update("isFirstLogin", value)
+            .addOnSuccessListener {
+                Log.d("ViewModel", "First login flag updated")
+            }
+            .addOnFailureListener {
+                Log.e("ViewModel", "Failed to update flag", it)
+            }
     }
 
     fun signInWithGoogle(idToken: String, onResult: (Boolean) -> Unit) {
@@ -141,6 +160,59 @@ class BookingViewModel @Inject constructor() : ViewModel() {
             .addOnFailureListener { onComplete(false) }
     }
 
+    fun checkUserSessionAndFirstTime() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            checkIfFirstTime(user.uid) { isFirst ->
+                _authFlowState.value = AuthFlowState(
+                    isLoggedIn = true,
+                    isFirstTime = isFirst,
+                    checked = true
+                )
+            }
+        } else {
+            _authFlowState.value = AuthFlowState(
+                isLoggedIn = false,
+                isFirstTime = false,
+                checked = true
+            )
+        }
+    }
+
+    fun checkIfFirstTime(uid: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val userDoc = Firebase.firestore
+                    .collection("users")
+                    .document(uid)
+                    .get()
+                    .await()
+
+                val isFirst = userDoc.getBoolean("isFirstLogin") ?: true
+                onResult(isFirst)
+            } catch (e: Exception) {
+                Log.e("BookingViewModel", "Error checking first time", e)
+                onResult(true) // Assume true if something went wrong
+            }
+        }
+    }
+
+    fun updateUserProfile(uid: String, area: String, budget: String, onComplete: (Boolean) -> Unit) {
+        firestore.collection("users").document(uid).update(
+            mapOf(
+                "area" to area,
+                "budget" to budget,
+                "isFirstLogin" to false
+            )
+        ).addOnSuccessListener {
+            _isFirstTime.value = false
+            _currentUser.value = _currentUser.value?.copy(isFirstLogin = false) // ✅ updates collected state
+            onComplete(true)
+        }.addOnFailureListener {
+            onComplete(false)
+        }
+    }
+
     fun fetchUserData(uid: String, onComplete: (User?) -> Unit) {
         firestore.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
@@ -152,26 +224,6 @@ class BookingViewModel @Inject constructor() : ViewModel() {
                 onComplete(null)
             }
     }
-
-    fun updateUserProfile(uid: String, bio: String, address: String, onComplete: (Boolean) -> Unit) {
-        firestore.collection("users").document(uid)
-            .update(mapOf("bio" to bio, "address" to address, "isFirstLogin" to false))
-            .addOnSuccessListener {
-                _isFirstTime.value = false
-                onComplete(true)
-            }
-            .addOnFailureListener {
-                onComplete(false)
-            }
-    }
-
-    fun checkIfFirstTime(uid: String) {
-        firestore.collection("users").document(uid).get().addOnSuccessListener { document ->
-            val user = document.toObject<User>()
-            _isFirstTime.value = user?.isFirstLogin ?: false
-        }
-    }
-
 
     fun fetchCurrentUserName(onResult: (String?) -> Unit) {
         val uid = auth.currentUser?.uid
