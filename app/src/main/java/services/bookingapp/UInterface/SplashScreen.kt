@@ -142,7 +142,7 @@ fun SplashScreen() {
 
             // Tagline
             Text(
-                text = "Looking for an experience?",
+                text = "Preparing your experience...",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.White.copy(alpha = 0.85f),
                     fontStyle = FontStyle.Italic,
