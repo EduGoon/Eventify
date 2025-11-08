@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="services.bookingapp" />
-                  <option name="mobileSdkAppId" value="1:1002676602075:android:a020f5a04b8734e0b0f8fe" />
-                  <option name="projectId" value="bookingapp-83abe" />
-                  <option name="projectNumber" value="1002676602075" />
+                  <option name="appId" value="services.eventify" />
+                  <option name="mobileSdkAppId" value="1:635542853383:android:ba83ae65169ba5633017a2" />
+                  <option name="projectId" value="eventify-737ee" />
+                  <option name="projectNumber" value="635542853383" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
