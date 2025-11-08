@@ -1,4 +1,4 @@
-package services.bookingapp.ui.theme
+package services.eventify.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

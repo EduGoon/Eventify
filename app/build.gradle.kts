@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "services.bookingapp"
+    namespace = "services.eventify"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "services.bookingapp"
+        applicationId = "services.eventify"
         minSdk = 25
         targetSdk = 35
         versionCode = 1

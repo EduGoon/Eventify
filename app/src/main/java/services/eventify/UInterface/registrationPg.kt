@@ -1,7 +1,8 @@
-package services.bookingapp.UInterface
+package services.eventify.UInterface
 
 import android.app.Activity
 import android.util.Log
+import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -88,13 +89,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
-import com.yourapp.booking.viewmodel.BookingViewModel
+import services.eventify.viewModel.EventifyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationPage(
     navController: NavHostController,
-    viewModel: BookingViewModel = viewModel()
+    viewModel: EventifyViewModel = viewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -313,7 +314,7 @@ fun RegistrationPage(
                     when {
                         name.isBlank() -> viewModel.setError("Name is required")
                         email.isBlank() -> viewModel.setError("Email is required")
-                        !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
+                        !Patterns.EMAIL_ADDRESS.matcher(email).matches() ->
                             viewModel.setError("Please enter a valid email")
                         phone.length != 10 -> viewModel.setError("Please enter a valid 10-digit phone number")
                         password.length < 6 -> viewModel.setError("Password must be at least 6 characters")
@@ -504,7 +505,7 @@ private fun EnhancedTextField(
 @Composable
 fun SocialAuthButtons(
     navController: NavHostController,
-    viewModel: BookingViewModel
+    viewModel: EventifyViewModel
 ) {
     val uiState by viewModel.uiState
 
@@ -580,7 +581,7 @@ fun SocialAuthButtons(
                         setColorScheme(SignInButton.COLOR_LIGHT)
                         setOnClickListener {
                             val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                                .requestIdToken("1002676602075-uc8iv3mq30fm0cjr6edv6s7emb0e0ulr.apps.googleusercontent.com")
+                                .requestIdToken("635542853383-9huodicm3glet8m1ma163qlnsh84l6q5.apps.googleusercontent.com")
                                 .requestEmail()
                                 .build()
 

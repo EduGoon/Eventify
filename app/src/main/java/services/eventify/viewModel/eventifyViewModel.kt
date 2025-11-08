@@ -1,4 +1,4 @@
-package com.yourapp.booking.viewmodel
+package services.eventify.viewModel
 
 import android.app.Activity
 import android.util.Log
@@ -16,19 +16,19 @@ import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.ktx.toObject
-import com.yourapp.booking.viewmodel.BookingViewModel.HiltViewModel
+import services.eventify.viewModel.EventifyViewModel.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import services.bookingapp.DataModel.AuthFlowState
-import services.bookingapp.DataModel.UiState
-import services.bookingapp.DataModel.User
+import services.eventify.DataModel.AuthFlowState
+import services.eventify.DataModel.UiState
+import services.eventify.DataModel.User
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-class BookingViewModel @Inject constructor() : ViewModel() {
+class EventifyViewModel @Inject constructor() : ViewModel() {
     annotation class HiltViewModel
 
     private val _uiState = mutableStateOf(UiState())
@@ -191,7 +191,7 @@ class BookingViewModel @Inject constructor() : ViewModel() {
                 val isFirst = userDoc.getBoolean("isFirstLogin") ?: true
                 onResult(isFirst)
             } catch (e: Exception) {
-                Log.e("BookingViewModel", "Error checking first time", e)
+                Log.e("EventifyViewModel", "Error checking first time", e)
                 onResult(true) // Assume true if something went wrong
             }
         }

@@ -1,4 +1,4 @@
-package services.bookingapp
+package services.eventify
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,8 +8,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.google.firebase.FirebaseApp
-import services.bookingapp.UInterface.MainApp
-import services.bookingapp.ui.theme.BookingAppTheme
+import services.eventify.UInterface.MainApp
+import services.eventify.ui.theme.EventifyTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         FirebaseApp.initializeApp(this)
 
         setContent {
-            BookingAppTheme {
+            EventifyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

@@ -1,4 +1,4 @@
-package services.bookingapp.ui.pages
+package services.eventify.ui.pages
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -22,14 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.yourapp.booking.viewmodel.BookingViewModel
+import services.eventify.viewModel.EventifyViewModel
 
 @Composable
 fun PhoneAuthPage(
     navController: NavHostController,
     activity: Activity,
-    viewModel: BookingViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: EventifyViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState
 

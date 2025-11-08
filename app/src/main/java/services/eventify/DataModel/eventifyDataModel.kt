@@ -1,7 +1,6 @@
-package services.bookingapp.DataModel
+package services.eventify.DataModel
 
 import com.google.firebase.auth.PhoneAuthProvider
-
 
 data class AuthFlowState(
     val isLoggedIn: Boolean = false,

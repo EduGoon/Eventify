@@ -1,4 +1,4 @@
-package services.bookingapp.UInterface
+package services.eventify.UInterface
 
 import android.app.Activity
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -16,12 +16,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.yourapp.booking.viewmodel.BookingViewModel
-import services.bookingapp.ui.pages.PhoneAuthPage
+import services.eventify.ui.pages.PhoneAuthPage
+import services.eventify.viewModel.EventifyViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun MainApp(viewModel: BookingViewModel = viewModel()) {
+fun MainApp(viewModel: EventifyViewModel = viewModel()) {
     val navController = rememberNavController()
     val authFlow by viewModel.authFlowState.collectAsState()
 

@@ -1,4 +1,4 @@
-package services.bookingapp.UInterface
+package services.eventify.UInterface
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -74,11 +74,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import com.yourapp.booking.viewmodel.BookingViewModel
+import services.eventify.viewModel.EventifyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePage(navController: NavController, viewModel: BookingViewModel = viewModel()) {
+fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewModel()) {
     var name by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
     val uid = FirebaseAuth.getInstance().currentUser?.uid

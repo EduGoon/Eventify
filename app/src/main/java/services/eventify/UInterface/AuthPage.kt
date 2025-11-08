@@ -1,4 +1,4 @@
-package services.bookingapp.UInterface
+package services.eventify.UInterface
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -76,14 +76,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.yourapp.booking.viewmodel.BookingViewModel
 import kotlinx.coroutines.delay
+import services.eventify.viewModel.EventifyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthPage(
     navController: NavHostController,
-    viewModel: BookingViewModel = viewModel()
+    viewModel: EventifyViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
