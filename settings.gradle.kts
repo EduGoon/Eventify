@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "bookingApp"
+rootProject.name = "Eventify"
 include(":app")
  

@@ -11,7 +11,6 @@ import com.google.firebase.FirebaseApp
 import services.bookingapp.UInterface.MainApp
 import services.bookingapp.ui.theme.BookingAppTheme
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
