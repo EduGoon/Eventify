@@ -14,7 +14,7 @@ import com.google.firebase.auth.PhoneAuthCredential
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.ktx.toObject
 import services.eventify.viewModel.EventifyViewModel.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +35,7 @@ class EventifyViewModel @Inject constructor() : ViewModel() {
     val uiState: State<UiState> = _uiState
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore
 
     private val _authState = MutableStateFlow(false)
 
@@ -47,6 +47,18 @@ class EventifyViewModel @Inject constructor() : ViewModel() {
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
+
+    init {
+        firestore = FirebaseFirestore.getInstance()
+        try {
+            val settings = FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(true)
+                .build()
+            firestore.firestoreSettings = settings
+        } catch (e: IllegalStateException) {
+            Log.w("EventifyViewModel", "Firestore settings already set")
+        }
+    }
 
     fun setLoading(){
         _uiState.value = UiState(loading = true)
@@ -105,7 +117,7 @@ class EventifyViewModel @Inject constructor() : ViewModel() {
 
     fun setFirstTime(value: Boolean) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        Firebase.firestore.collection("users").document(uid)
+        firestore.collection("users").document(uid)
             .update("isFirstLogin", value)
             .addOnSuccessListener {
                 Log.d("ViewModel", "First login flag updated")
@@ -186,7 +198,7 @@ class EventifyViewModel @Inject constructor() : ViewModel() {
     fun checkIfFirstTime(uid: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                val userDoc = Firebase.firestore
+                val userDoc = firestore
                     .collection("users")
                     .document(uid)
                     .get()
