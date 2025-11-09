@@ -156,8 +156,12 @@ class EventifyViewModel @Inject constructor() : ViewModel() {
 
     private fun saveUserToFirestore(user: User, onComplete: (Boolean) -> Unit) {
         firestore.collection("users").document(user.uid).set(user)
-            .addOnSuccessListener { onComplete(true) }
-            .addOnFailureListener { onComplete(false) }
+            .addOnSuccessListener { onComplete(true)
+            Log.d("viewmodel", "SAVED SUCCESSFULLY")
+            }
+            .addOnFailureListener { onComplete(false)
+                Log.d("viewmodel", "User Not SAVED")
+            }
     }
 
     fun checkUserSessionAndFirstTime() {
