@@ -1,4 +1,4 @@
-package services.eventify.viewModel
+package services.presentation.viewmodel
 
 import android.app.Activity
 import android.util.Log

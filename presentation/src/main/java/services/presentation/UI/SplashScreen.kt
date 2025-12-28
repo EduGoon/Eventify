@@ -1,4 +1,4 @@
-package services.eventify.UInterface
+package services.presentation.UI
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

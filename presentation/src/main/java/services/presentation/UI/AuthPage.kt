@@ -1,4 +1,4 @@
-package services.eventify.UInterface
+package services.presentation.UI
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility

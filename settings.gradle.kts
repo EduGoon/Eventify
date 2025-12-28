@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Eventify"
 include(":app")
- 
+include(":presentation")
+include(":data")

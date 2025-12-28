@@ -1,4 +1,4 @@
-package services.eventify.ui.pages
+package services.presentation.UI
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement

@@ -42,39 +42,14 @@ android {
     }
 }
 
-dependencies {  // <-- Make sure this line is here
-    // AndroidX + Compose
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
+dependencies {
+    implementation(project(":presentation"))
 
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.9.0")
-
-    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
 
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")
-
-    // Other dependencies
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.navigation.safe.args.generator)
-    implementation(libs.androidx.benchmark.macro)
-    implementation(libs.androidx.room.runtime.android)
-
-    // Compose extras
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.33.2-alpha")
-    implementation("androidx.compose.material:material-icons-extended:1.5.4")
-    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
 
     // Tests
     testImplementation(libs.junit)

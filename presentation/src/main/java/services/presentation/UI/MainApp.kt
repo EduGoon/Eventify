@@ -1,4 +1,4 @@
-package services.eventify.UInterface
+package services.presentation.UI
 
 import android.app.Activity
 import androidx.compose.animation.ExperimentalAnimationApi

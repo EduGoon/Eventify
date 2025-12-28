@@ -1,4 +1,4 @@
-package services.eventify.UInterface
+package services.presentation.UI
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -88,7 +88,6 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
 
     LaunchedEffect(uid) {
         if (uid != null) {
-            viewModel.fetchUserData(uid, {})
             viewModel.fetchCurrentUserName { resultName ->
                 name = resultName ?: ""
             }
@@ -218,18 +217,6 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
 
                 Spacer(modifier = Modifier.height(100.dp))
             }
-
-            // ✅ This handles showing the FirstTimePopupForm correctly
-            val showOnboarding = user?.isFirstLogin == true
-            FirstTimePopupForm(
-                show = showOnboarding,
-                onDismiss = { viewModel.setFirstTime(false) },
-                onSubmit = { area, budget ->
-                    uid?.let {
-                        viewModel.updateUserProfile(it, area, budget) {}
-                    }
-                }
-            )
         }
     }
 }
