@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -42,8 +42,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,16 +73,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.delay
-import services.eventify.viewModel.EventifyViewModel
+import services.presentation.viewmodel.EventifyViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthPage(
     navController: NavHostController,
-    viewModel: EventifyViewModel = viewModel()
+    viewModel: EventifyViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -129,16 +127,12 @@ fun AuthPage(
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .align(Alignment.Center) // ✅ Valid here because we're inside a Box
-                        .padding(bottom = 48.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     // App Icon/Logo placeholder
                     Box(
@@ -261,13 +255,10 @@ fun AuthPage(
                                 keyboardController?.hide()
                                 if (email.isNotBlank() && password.isNotBlank()) {
                                     viewModel.loginWithEmail(email.trim(), password.trim()) { success ->
-                                        if (success) {
-                                            viewModel.setSuccess()
-                                        } else {
+                                        if (!success) {
                                             Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                                         }
                                     }
-
                                 }
                             }
                         ),
@@ -323,9 +314,7 @@ fun AuthPage(
                                 email.isBlank() -> viewModel.setError("Email is required")
                                 password.isBlank() -> viewModel.setError("Password is required")
                                 else -> viewModel.loginWithEmail(email.trim(), password.trim()) { success ->
-                                    if (success) {
-                                        viewModel.setSuccess()
-                                    } else {
+                                    if (!success) {
                                         Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
                                     }
                                 }
@@ -434,7 +423,7 @@ fun AuthPage(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 )
@@ -443,7 +432,7 @@ fun AuthPage(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                 )
@@ -457,8 +446,8 @@ fun AuthPage(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
-                //This SocialAuthButtons composable is found in RegistrationPage
-                SocialAuthButtons(navController, viewModel())
+                // SocialAuthButtons composable is in registrationPg.kt
+                SocialAuthButtons(navController, hiltViewModel())
 
                 // Phone Authentication Button
                 OutlinedButton(

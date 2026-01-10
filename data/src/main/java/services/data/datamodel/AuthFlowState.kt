@@ -1,4 +1,4 @@
-package services.data.DataModel
+package services.data.datamodel
 
 data class AuthFlowState(
     val isLoggedIn: Boolean = false,

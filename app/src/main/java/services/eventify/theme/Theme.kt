@@ -1,4 +1,4 @@
-package services.eventify.ui.theme
+package services.eventify.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

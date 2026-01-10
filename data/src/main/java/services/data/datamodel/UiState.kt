@@ -1,4 +1,4 @@
-package services.data.DataModel
+package services.data.datamodel
 
 import com.google.firebase.auth.PhoneAuthProvider
 

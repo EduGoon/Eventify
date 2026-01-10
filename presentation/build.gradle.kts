@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -38,7 +40,6 @@ android {
 
 dependencies {
     implementation(project(":data"))
-    implementation(platform(libs.firebase.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -48,12 +49,23 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation("androidx.navigation:navigation-compose:2.9.0")
+
+    //Firebase & firestore
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
+    
+    implementation(libs.play.services.auth)
     implementation("com.google.accompanist:accompanist-swiperefresh:0.33.2-alpha")
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
     implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

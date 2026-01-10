@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import services.eventify.viewModel.EventifyViewModel
+import services.presentation.viewmodel.EventifyViewModel
 
 @Composable
 fun PhoneAuthPage(

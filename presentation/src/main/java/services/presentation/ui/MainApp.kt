@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import android.app.Activity
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -12,16 +12,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
-import services.eventify.ui.pages.PhoneAuthPage
-import services.eventify.viewModel.EventifyViewModel
+import services.presentation.viewmodel.EventifyViewModel
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun MainApp(viewModel: EventifyViewModel = viewModel()) {
+fun MainApp(viewModel: EventifyViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val authFlow by viewModel.authFlowState.collectAsState()
 

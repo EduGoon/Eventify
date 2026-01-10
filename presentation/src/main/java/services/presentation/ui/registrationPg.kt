@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import android.app.Activity
 import android.util.Log
@@ -7,12 +7,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -27,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,9 +34,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -51,7 +46,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -69,8 +63,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -89,9 +83,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
-import services.eventify.viewModel.EventifyViewModel
+import services.presentation.viewmodel.EventifyViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationPage(
     navController: NavHostController,
@@ -106,44 +99,28 @@ fun RegistrationPage(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
     val uiState by viewModel.uiState
     val focusManager = LocalFocusManager.current
 
-    // Navigation effect with improved UX
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
-            navController.navigate("home"){
+            navController.navigate("home") {
                 popUpTo(0) { inclusive = true }
             }
             viewModel.resetState()
         }
     }
 
-    // Animated background gradient
-    val infiniteTransition = rememberInfiniteTransition(label = "background")
-    val animatedOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "gradient_animation"
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.linearGradient(
+                Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f),
-                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
-                    ),
-                    start = Offset(animatedOffset * 1000, 0f),
-                    end = Offset((1 - animatedOffset) * 1000, 1000f)
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+                        MaterialTheme.colorScheme.background,
+                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.05f)
+                    )
                 )
             )
     ) {
@@ -152,36 +129,28 @@ fun RegistrationPage(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
+                .navigationBarsPadding()
                 .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Enhanced Header Section
+            // Header Section
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(top = 16.dp)
             ) {
-                // Animated Icon
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(64.dp)
                         .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                                )
-                            )
-                        ),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Default.PersonAdd,
+                        Icons.Default.Event,
                         contentDescription = null,
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
 
@@ -189,9 +158,9 @@ fun RegistrationPage(
 
                 Text(
                     text = "Create Account",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Text(
@@ -204,7 +173,7 @@ fun RegistrationPage(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Enhanced Form Fields with better spacing and design
+            // Enhanced Form Fields
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -217,7 +186,6 @@ fun RegistrationPage(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Name Field
                     EnhancedTextField(
                         value = name,
                         onValueChange = { name = it },
@@ -232,7 +200,6 @@ fun RegistrationPage(
                         )
                     )
 
-                    // Email Field
                     EnhancedTextField(
                         value = email,
                         onValueChange = { email = it },
@@ -247,7 +214,6 @@ fun RegistrationPage(
                         )
                     )
 
-                    // Phone Field
                     EnhancedTextField(
                         value = phone,
                         onValueChange = {
@@ -265,7 +231,6 @@ fun RegistrationPage(
                         prefix = "+254 "
                     )
 
-                    // Password Field
                     EnhancedTextField(
                         value = password,
                         onValueChange = { password = it },
@@ -283,7 +248,6 @@ fun RegistrationPage(
                         )
                     )
 
-                    // Confirm Password Field
                     EnhancedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
@@ -307,7 +271,6 @@ fun RegistrationPage(
                 }
             }
 
-            // Enhanced Register Button
             Button(
                 onClick = {
                     focusManager.clearFocus()
@@ -367,7 +330,6 @@ fun RegistrationPage(
                 }
             }
 
-            // Error Message with improved styling
             AnimatedVisibility(
                 visible = uiState.error != null,
                 enter = slideInVertically() + fadeIn(),
@@ -400,7 +362,6 @@ fun RegistrationPage(
                 }
             }
 
-            // Login Redirect with enhanced styling
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -511,7 +472,6 @@ fun SocialAuthButtons(
 
     LaunchedEffect(uiState.success) {
         if (uiState.success) {
-            // Let MainApp's authFlow take over — just trigger the state update
             viewModel.checkUserSessionAndFirstTime()
             viewModel.resetState()
         }
@@ -544,7 +504,7 @@ fun SocialAuthButtons(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp), // Optional: add some side padding
+            .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -598,8 +558,5 @@ fun SocialAuthButtons(
                     .height(48.dp)
             )
         }
-
-        //Other social buttons can be added here
-
     }
 }

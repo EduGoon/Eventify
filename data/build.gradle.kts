@@ -33,9 +33,12 @@ android {
 }
 
 dependencies {
+    //Firebase & firestore
     implementation(platform(libs.firebase.bom))
-    implementation(libs.androidx.core.ktx)
     implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+
+    implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

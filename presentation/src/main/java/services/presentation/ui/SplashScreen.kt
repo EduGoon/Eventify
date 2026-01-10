@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing

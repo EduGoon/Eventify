@@ -1,4 +1,4 @@
-package services.presentation.UI
+package services.presentation.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -71,26 +71,37 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
-import services.eventify.viewModel.EventifyViewModel
+import services.presentation.viewmodel.EventifyViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewModel()) {
+fun HomePage(navController: NavController, viewModel: EventifyViewModel = hiltViewModel()) {
     var name by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     val scrollState = rememberScrollState()
 
     val user by viewModel.currentUser.collectAsState()
+    val authFlow by viewModel.authFlowState.collectAsState()
 
     LaunchedEffect(uid) {
         if (uid != null) {
             viewModel.fetchCurrentUserName { resultName ->
                 name = resultName ?: ""
             }
+            viewModel.fetchUserData(uid) {}
+        }
+    }
+
+    // Logic to show FirstTimePopupForm
+    var showFirstTimePopup by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(authFlow.checked, authFlow.isFirstTime) {
+        if (authFlow.checked && authFlow.isFirstTime) {
+            showFirstTimePopup = true
         }
     }
 
@@ -123,7 +134,7 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
                         ) {
                             Column {
                                 Text(
-                                    text = if (name.isNotBlank()) "$name" else "",
+                                    text = if (name.isNotBlank()) "Hello, $name" else "Hello!",
                                     style = MaterialTheme.typography.headlineSmall,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
@@ -177,10 +188,10 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
 
-                var selected = ""
+                var selectedFilterText by remember { mutableStateOf("") }
 
                 QuickFiltersSection(onSelect = { selectedFilter ->
-                    selected = selectedFilter
+                    selectedFilterText = if (selectedFilter != "null") selectedFilter else ""
                 })
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -202,7 +213,7 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SectionHeader(
-                    title = "📅 Upcoming $selected Near You",
+                    title = if (selectedFilterText.isNotBlank()) "📅 Upcoming $selectedFilterText Near You" else "📅 Upcoming Events Near You",
                     subtitle = "Events happening in your area"
                 )
 
@@ -217,6 +228,20 @@ fun HomePage(navController: NavController, viewModel: EventifyViewModel = viewMo
 
                 Spacer(modifier = Modifier.height(100.dp))
             }
+            
+            FirstTimePopupForm(
+                show = showFirstTimePopup,
+                onDismiss = { showFirstTimePopup = false },
+                onSubmit = { area, budget ->
+                    if (uid != null) {
+                        viewModel.updateUserProfile(uid, area, budget) { success ->
+                            if (success) {
+                                showFirstTimePopup = false
+                            }
+                        }
+                    }
+                }
+            )
         }
     }
 }
