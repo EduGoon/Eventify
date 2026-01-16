@@ -12,32 +12,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Brown80,
+    secondary = BrownGrey80,
+    tertiary = Cream80,
+    background = PrimaryBrown,
+    surface = PrimaryBrown,
+    onPrimary = BackgroundCream,
+    onSecondary = BackgroundCream,
+    onTertiary = PrimaryBrown,
+    onBackground = BackgroundCream,
+    onSurface = BackgroundCream
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PrimaryBrown,
+    secondary = SecondaryBrown,
+    tertiary = BrownGrey40,
+    background = BackgroundCream,
+    surface = SurfaceCream,
+    onPrimary = BackgroundCream,
+    onSecondary = BackgroundCream,
+    onTertiary = BackgroundCream,
+    onBackground = PrimaryBrown,
+    onSurface = PrimaryBrown
 )
 
 @Composable
 fun EventifyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Set to false to prioritize our brownish theme
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
