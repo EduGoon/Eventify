@@ -8,4 +8,6 @@ interface AuthRepository {
     fun signInWithGoogle(idToken: String): Flow<Result<AuthResult>>
     fun getCurrentUser(): User?
     fun signOut()
+    fun getAuthState(): Flow<User?>
+    fun validateSession(): Flow<User?>
 }

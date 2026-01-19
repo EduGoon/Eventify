@@ -13,9 +13,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val webClientId = getString(R.string.default_web_client_id)
         setContent {
             EventifyTheme {
-                MainApp()
+                MainApp(webClientId = webClientId)
             }
         }
     }
