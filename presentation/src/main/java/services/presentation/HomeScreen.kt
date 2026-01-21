@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -33,6 +34,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import services.data.Event
+import java.text.SimpleDateFormat
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
+import kotlin.text.format
+import kotlin.text.uppercase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,55 +140,89 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Eventify", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)) },
+            CenterAlignedTopAppBar(
+                title = { 
+                    Text(
+                        "Eventify", 
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.5).sp
+                        )
+                    ) 
+                },
                 actions = {
                     IconButton(onClick = { }) { Icon(Icons.Default.Search, contentDescription = "Search") }
-                    IconButton(onClick = { }) { Icon(Icons.Default.Notifications, contentDescription = "Notifications") }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             if (events.isEmpty()) {
                 item { HomeSkeleton() }
             } else {
                 item {
-                    Text("Suggested for you", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 16.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        items(events.take(3)) { event -> 
-                            SuggestedEventCard(event = event, onClick = { selectedEvent = event }) 
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text(
+                            "Discover", 
+                            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        Text(
+                            "Find amazing events around you", 
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 24.dp)
+                        )
+                    }
+                }
+
+                item {
+                    Text(
+                        "Featured Events", 
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    ) {
+                        items(events.take(5)) { event -> 
+                            FeaturedEventCard(event = event, onClick = { selectedEvent = event }) 
                         }
                     }
                 }
 
                 item {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                }
-
-                item {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Events near you", style = MaterialTheme.typography.titleLarge)
-                        IconButton(onClick = { showFilterSheet = true }) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Filter", tint = MaterialTheme.colorScheme.primary)
+                        Text("Explore Nearby", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                        TextButton(onClick = { showFilterSheet = true }) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Filter")
                         }
                     }
                 }
 
                 items(events) { event ->
-                    NearEventCard(event = event, onClick = { selectedEvent = event })
-                    Spacer(modifier = Modifier.height(12.dp))
+                    EventListItem(event = event, onClick = { selectedEvent = event })
                 }
+                
+                item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         }
     }
@@ -193,6 +234,8 @@ fun EventDetailContent(
     onImageClick: (String) -> Unit
 ) {
     val uriHandler = LocalUriHandler.current
+    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
+    val dateParts = remember(event.date) { parseIsoDateParts(event.date) }
 
     Column(
         modifier = Modifier
@@ -202,7 +245,7 @@ fun EventDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp)
+                .height(350.dp)
                 .clickable { event.imageUrl?.let { onImageClick(it) } }
         ) {
             AsyncImage(
@@ -216,56 +259,90 @@ fun EventDetailContent(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                            startY = 400f
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 500f
                         )
                     )
             )
+            
+            // Date Badge on top of image
+            if (dateParts != null) {
+                Surface(
+                    modifier = Modifier.padding(20.dp).align(Alignment.TopStart),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White.copy(alpha = 0.9f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(dateParts.first, fontWeight = FontWeight.Bold, color = Color.Red, fontSize = 14.sp)
+                        Text(dateParts.second, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                    }
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(20.dp)
+                    .padding(24.dp)
             ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "UPCOMING",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = event.title ?: "",
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = event.location ?: "", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.9f))
-                }
             }
         }
 
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            // Price and Share Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(text = "Date & Time", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    Text(text = event.date ?: "", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = event.price ?: "",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        fontWeight = FontWeight.Bold
+                Text(
+                    text = event.price ?: "Free",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                )
+                Row {
+                    FilledTonalIconButton(onClick = { /* Share */ }) {
+                        Icon(Icons.Default.Share, contentDescription = "Share")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledTonalIconButton(onClick = { /* Favorite */ }) {
+                        Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorite")
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(text = "About Event", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+            // Info Section
+            InfoRow(icon = Icons.Default.CalendarMonth, title = formattedDate, subtitle = "Starting time")
+            Spacer(modifier = Modifier.height(16.dp))
+            InfoRow(icon = Icons.Default.LocationOn, title = event.location ?: "Online", subtitle = "Event venue")
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(text = "About this event", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = if (event.about.isNullOrBlank()) {
                     "Join us for this amazing event at ${event.location}. Experience a night of wonder and excitement. Don't miss out on this opportunity to connect and enjoy!"
@@ -273,55 +350,232 @@ fun EventDetailContent(
                     event.about!!
                 },
                 style = MaterialTheme.typography.bodyLarge,
-                lineHeight = 24.sp,
+                lineHeight = 26.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                ActionButton(icon = Icons.Default.Notifications, label = "Remind Me")
-                ActionButton(icon = Icons.Default.ThumbUp, label = "Like")
-                ActionButton(icon = Icons.Default.ThumbDown, label = "Dislike")
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             
             Button(
                 onClick = { 
                     event.url?.let { 
                         try {
                             uriHandler.openUri(it)
-                        } catch (e: Exception) {
-                            // Handle invalid URI if necessary
-                        }
+                        } catch (e: Exception) { }
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                enabled = !event.url.isNullOrBlank()
+                enabled = !event.url.isNullOrBlank(),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Text("Get Tickets", style = MaterialTheme.typography.titleMedium)
+                Text("Reserve Your Spot", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, subtitle: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold))
+            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun FeaturedEventCard(event: Event, onClick: () -> Unit) {
+    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
+    
+    Card(
+        modifier = Modifier
+            .width(300.dp)
+            .height(220.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
+                contentDescription = null, 
+                modifier = Modifier.fillMaxSize(), 
+                contentScale = ContentScale.Crop
+            )
+            
+            // Gradient overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 300f
+                        )
+                    )
+            )
+
+            // Price Badge
+            Surface(
+                modifier = Modifier.padding(16.dp).align(Alignment.TopEnd),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = event.price ?: "Free",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = event.title ?: "", 
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Schedule, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = formattedDate, 
+                        style = MaterialTheme.typography.bodySmall, 
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        FilledTonalIconButton(
-            onClick = { },
-            modifier = Modifier.size(56.dp),
-            shape = CircleShape
+fun EventListItem(event: Event, onClick: () -> Unit) {
+    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
+    
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = label)
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
+                contentDescription = null, 
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = formattedDate.uppercase(), 
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = event.title ?: "", 
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.LocationOn, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = event.location ?: "", 
+                        style = MaterialTheme.typography.bodySmall, 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            
+            Icon(
+                Icons.Default.ChevronRight, 
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+fun formatIsoDate(isoString: String?): String {
+    if (isoString.isNullOrBlank()) return "TBA"
+    return try {
+        // SimpleDateFormat is compatible with API 24
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH)
+        val outputFormat = SimpleDateFormat("EEE, d MMM • h:mm a", Locale.ENGLISH)
+        val date = inputFormat.parse(isoString)
+        date?.let { outputFormat.format(it) } ?: isoString
+    } catch (e: Exception) {
+        // Fallback for different ISO formats
+        try {
+            val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }.parse(isoString)
+            val outputFormat = SimpleDateFormat("EEE, d MMM • h:mm a", Locale.ENGLISH)
+            date?.let { outputFormat.format(it) } ?: isoString
+        } catch (e2: Exception) {
+            isoString
+        }
+    }
+}
+
+fun parseIsoDateParts(isoString: String?): Pair<String, String>? {
+    if (isoString.isNullOrBlank()) return null
+    return try {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH)
+        val date = inputFormat.parse(isoString) ?: return null
+
+        val monthFormat = SimpleDateFormat("MMM", Locale.ENGLISH)
+        val dayFormat = SimpleDateFormat("dd", Locale.ENGLISH)
+
+        val month = monthFormat.format(date).uppercase()
+        val day = dayFormat.format(date)
+        Pair(month, day)
+    } catch (e: Exception) {
+        null
     }
 }
 
@@ -334,59 +588,23 @@ fun HomeSkeleton() {
         label = "alpha"
     )
 
-    Column {
-        Box(Modifier.fillMaxWidth(0.5f).height(24.dp).padding(vertical = 4.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(4.dp)))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(vertical = 16.dp)) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        Box(Modifier.fillMaxWidth(0.5f).height(40.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(8.dp)))
+        Spacer(Modifier.height(8.dp))
+        Box(Modifier.fillMaxWidth(0.7f).height(20.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(4.dp)))
+        
+        Spacer(Modifier.height(32.dp))
+        
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             items(2) {
-                Box(Modifier.width(280.dp).height(180.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(16.dp)))
+                Box(Modifier.width(300.dp).height(220.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(24.dp)))
             }
         }
         
-        Box(Modifier.fillMaxWidth(0.4f).height(24.dp).padding(vertical = 4.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(4.dp)))
+        Spacer(Modifier.height(32.dp))
+        
         repeat(5) {
-            Box(Modifier.fillMaxWidth().height(100.dp).padding(vertical = 6.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(12.dp)))
-        }
-    }
-}
-
-@Composable
-fun SuggestedEventCard(event: Event, onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier.width(280.dp).height(180.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
-                contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
-            )
-            Column(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(12.dp)) {
-                Text(text = event.title ?: "", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), color = Color.White)
-                Text(text = "${event.date} • ${event.location}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
-            }
-        }
-    }
-}
-
-@Composable
-fun NearEventCard(event: Event, onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth().height(100.dp).clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
-                contentDescription = null, modifier = Modifier.size(100.dp).clip(RoundedCornerShape(12.dp, 0.dp, 0.dp, 12.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Column(modifier = Modifier.padding(horizontal = 16.dp).weight(1f)) {
-                Text(text = event.title ?: "", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold), maxLines = 1)
-                Text(text = event.location ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                Text(text = event.price ?: "", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-            }
+            Box(Modifier.fillMaxWidth().height(100.dp).padding(vertical = 8.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(16.dp)))
         }
     }
 }
