@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -50,47 +51,19 @@ fun HomeScreen(
     var showFilterSheet by remember { mutableStateOf(false) }
     var selectedEvent by remember { mutableStateOf<Event?>(null) }
     var fullScreenImageUrl by remember { mutableStateOf<String?>(null) }
-    
-    val locations = listOf("All", "Nairobi", "Mombasa", "Kisumu", "Nakuru", "International")
-    val eventTypes = listOf("All", "Music", "Tech", "Sports", "Art", "Food", "Business")
-    
-    var selectedLocation by remember { mutableStateOf("All") }
-    var selectedType by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf("All") }
 
+    val categories = listOf("All", "Music", "Tech", "Sports", "Art", "Food", "Business")
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
+    // Filter sheet
     if (showFilterSheet) {
         ModalBottomSheet(onDismissRequest = { showFilterSheet = false }) {
-            Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
-                Text("Filters", style = MaterialTheme.typography.headlineSmall)
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text("Location", style = MaterialTheme.typography.titleMedium)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(locations) { loc ->
-                        FilterChip(
-                            selected = selectedLocation == loc,
-                            onClick = { selectedLocation = loc },
-                            label = { Text(loc) }
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Event Type", style = MaterialTheme.typography.titleMedium)
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(eventTypes) { type ->
-                        FilterChip(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type },
-                            label = { Text(type) }
-                        )
-                    }
-                }
-            }
+            FilterSheetContent(onDismiss = { showFilterSheet = false })
         }
     }
 
+    // Event detail sheet
     if (selectedEvent != null) {
         ModalBottomSheet(
             onDismissRequest = { selectedEvent = null },
@@ -106,6 +79,7 @@ fun HomeScreen(
         }
     }
 
+    // Full screen image dialog
     if (fullScreenImageUrl != null) {
         Dialog(
             onDismissRequest = { fullScreenImageUrl = null },
@@ -140,23 +114,70 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        "Eventify", 
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = (-0.5).sp
-                        )
-                    ) 
-                },
-                actions = {
-                    IconButton(onClick = { }) { Icon(Icons.Default.Search, contentDescription = "Search") }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 0.dp
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                "Eventify",
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = (-1).sp
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                "Nairobi, Kenya",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalIconButton(onClick = { }) {
+                                Icon(Icons.Default.Search, contentDescription = "Search")
+                            }
+                            FilledTonalIconButton(onClick = { }) {
+                                Icon(Icons.Default.Person, contentDescription = "Profile")
+                            }
+                        }
+                    }
+
+                    // Category chips
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        items(categories) { category ->
+                            FilterChip(
+                                selected = selectedCategory == category,
+                                onClick = { selectedCategory = category },
+                                label = {
+                                    Text(
+                                        category,
+                                        style = MaterialTheme.typography.labelLarge.copy(
+                                            fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Medium
+                                        )
+                                    )
+                                },
+                                leadingIcon = if (selectedCategory == category) {
+                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                                } else null
+                            )
+                        }
+                    }
+                }
+            }
         }
     ) { padding ->
         LazyColumn(
@@ -168,60 +189,157 @@ fun HomeScreen(
             if (events.isEmpty()) {
                 item { HomeSkeleton() }
             } else {
+                // Hero Event (Biggest featured event)
                 item {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            "Discover", 
-                            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Text(
-                            "Find amazing events around you", 
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 24.dp)
-                        )
-                    }
-                }
-
-                item {
-                    Text(
-                        "Featured Events", 
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    HeroEventCard(
+                        event = events.firstOrNull() ?: return@item,
+                        onClick = { selectedEvent = events.firstOrNull() }
                     )
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    ) {
-                        items(events.take(5)) { event -> 
-                            FeaturedEventCard(event = event, onClick = { selectedEvent = event }) 
-                        }
-                    }
                 }
 
+                // Quick stats or promotional banner
                 item {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            icon = Icons.Default.Event,
+                            count = "${events.size}+",
+                            label = "Events",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            icon = Icons.Default.LocationOn,
+                            count = "5",
+                            label = "Cities",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            icon = Icons.Default.Star,
+                            count = "4.8",
+                            label = "Rating",
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                // Trending Events - Horizontal scroll
+                item {
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    "🔥 Trending Now",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Text(
+                                    "Don't miss these hot events",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        ) {
+                            items(events.take(5)) { event ->
+                                TrendingEventCard(event = event, onClick = { selectedEvent = event })
+                            }
+                        }
+                    }
+                }
+
+                // This Weekend Section
+                item {
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    "This Weekend",
+                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                )
+                                Text(
+                                    "Plan your perfect weekend",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            TextButton(onClick = { }) {
+                                Text("See all")
+                                Icon(Icons.Default.ChevronRight, null, modifier = Modifier.size(16.dp))
+                            }
+                        }
+
+                        // Two column grid
+                        val weekendEvents = events.drop(1).take(4)
+                        Column(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            weekendEvents.chunked(2).forEach { rowEvents ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    rowEvents.forEach { event ->
+                                        CompactEventCard(
+                                            event = event,
+                                            onClick = { selectedEvent = event },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    if (rowEvents.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // All Events List
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Explore Nearby", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                        Text(
+                            "All Events",
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                        )
                         TextButton(onClick = { showFilterSheet = true }) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.FilterList, null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
                             Text("Filter")
                         }
                     }
                 }
 
-                items(events) { event ->
-                    EventListItem(event = event, onClick = { selectedEvent = event })
+                items(events.drop(5)) { event ->
+                    ModernEventListItem(event = event, onClick = { selectedEvent = event })
                 }
-                
+
                 item { Spacer(modifier = Modifier.height(24.dp)) }
             }
         }
@@ -229,10 +347,495 @@ fun HomeScreen(
 }
 
 @Composable
-fun EventDetailContent(
-    event: Event,
-    onImageClick: (String) -> Unit
-) {
+fun HeroEventCard(event: Event, onClick: () -> Unit) {
+    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .height(400.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(event.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.3f),
+                                Color.Black.copy(alpha = 0.9f)
+                            ),
+                            startY = 200f
+                        )
+                    )
+            )
+
+            // Featured Badge
+            Surface(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .align(Alignment.TopStart),
+                color = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Text(
+                        "FEATURED",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = event.title ?: "",
+                    style = MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = (-0.5).sp
+                    ),
+                    color = Color.White,
+                    maxLines = 2
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.CalendarMonth,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            formattedDate,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    if (!event.location.isNullOrBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                event.location!!,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.9f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatCard(icon: ImageVector, count: String, label: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.height(90.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                count,
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+fun TrendingEventCard(event: Event, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .width(280.dp)
+            .height(180.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(event.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 200f
+                        )
+                    )
+            )
+
+            // Price
+            if (!event.price.isNullOrBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .align(Alignment.TopEnd),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        event.price!!,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    event.title ?: "",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!event.location.isNullOrBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        event.location!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CompactEventCard(event: Event, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val dateParts = remember(event.date) { parseIsoDateParts(event.date) }
+
+    Card(
+        modifier = modifier
+            .height(200.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(event.imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)),
+                            startY = 100f
+                        )
+                    )
+            )
+
+            // Date badge
+            if (dateParts != null) {
+                Surface(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .align(Alignment.TopStart),
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color.White.copy(alpha = 0.95f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            dateParts.first,
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 10.sp
+                        )
+                        Text(
+                            dateParts.second,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            }
+
+            Text(
+                event.title ?: "",
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp),
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+fun ModernEventListItem(event: Event, onClick: () -> Unit) {
+    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 6.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    ) {
+        Row(
+            modifier = Modifier.padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.size(90.dp)
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(event.imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    event.title ?: "",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        formattedDate,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (!event.location.isNullOrBlank()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.LocationOn,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            event.location!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+
+            FilledTonalIconButton(
+                onClick = onClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun FilterSheetContent(onDismiss: () -> Unit) {
+    val locations = listOf("All", "Nairobi", "Mombasa", "Kisumu", "Nakuru", "International")
+    val eventTypes = listOf("All", "Music", "Tech", "Sports", "Art", "Food", "Business")
+    val priceRanges = listOf("All", "Free", "Under KES 1000", "KES 1000-5000", "Above KES 5000")
+
+    var selectedLocation by remember { mutableStateOf("All") }
+    var selectedType by remember { mutableStateOf("All") }
+    var selectedPrice by remember { mutableStateOf("All") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        Text(
+            "Filter Events",
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text("Location", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(locations) { loc ->
+                FilterChip(
+                    selected = selectedLocation == loc,
+                    onClick = { selectedLocation = loc },
+                    label = { Text(loc) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Category", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(eventTypes) { type ->
+                FilterChip(
+                    selected = selectedType == type,
+                    onClick = { selectedType = type },
+                    label = { Text(type) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Price Range", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(priceRanges) { price ->
+                FilterChip(
+                    selected = selectedPrice == price,
+                    onClick = { selectedPrice = price },
+                    label = { Text(price) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            OutlinedButton(
+                onClick = {
+                    selectedLocation = "All"
+                    selectedType = "All"
+                    selectedPrice = "All"
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Reset")
+            }
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Apply Filters")
+            }
+        }
+    }
+}
+
+// Keep the existing helper functions and EventDetailContent
+@Composable
+fun EventDetailContent(event: Event, onImageClick: (String) -> Unit) {
     val uriHandler = LocalUriHandler.current
     val formattedDate = remember(event.date) { formatIsoDate(event.date) }
     val dateParts = remember(event.date) { parseIsoDateParts(event.date) }
@@ -264,8 +867,7 @@ fun EventDetailContent(
                         )
                     )
             )
-            
-            // Date Badge on top of image
+
             if (dateParts != null) {
                 Surface(
                     modifier = Modifier.padding(20.dp).align(Alignment.TopStart),
@@ -308,7 +910,6 @@ fun EventDetailContent(
         }
 
         Column(modifier = Modifier.padding(24.dp)) {
-            // Price and Share Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -322,11 +923,11 @@ fun EventDetailContent(
                     )
                 )
                 Row {
-                    FilledTonalIconButton(onClick = { /* Share */ }) {
+                    FilledTonalIconButton(onClick = { }) {
                         Icon(Icons.Default.Share, contentDescription = "Share")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    FilledTonalIconButton(onClick = { /* Favorite */ }) {
+                    FilledTonalIconButton(onClick = { }) {
                         Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorite")
                     }
                 }
@@ -334,7 +935,6 @@ fun EventDetailContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Info Section
             InfoRow(icon = Icons.Default.CalendarMonth, title = formattedDate, subtitle = "Starting time")
             Spacer(modifier = Modifier.height(16.dp))
             InfoRow(icon = Icons.Default.LocationOn, title = event.location ?: "Online", subtitle = "Event venue")
@@ -355,10 +955,10 @@ fun EventDetailContent(
             )
 
             Spacer(modifier = Modifier.height(40.dp))
-            
+
             Button(
-                onClick = { 
-                    event.url?.let { 
+                onClick = {
+                    event.url?.let {
                         try {
                             uriHandler.openUri(it)
                         } catch (e: Exception) { }
@@ -373,7 +973,7 @@ fun EventDetailContent(
             ) {
                 Text("Reserve Your Spot", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -399,157 +999,14 @@ fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String
     }
 }
 
-@Composable
-fun FeaturedEventCard(event: Event, onClick: () -> Unit) {
-    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
-    
-    Card(
-        modifier = Modifier
-            .width(300.dp)
-            .height(220.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
-                contentDescription = null, 
-                modifier = Modifier.fillMaxSize(), 
-                contentScale = ContentScale.Crop
-            )
-            
-            // Gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
-                            startY = 300f
-                        )
-                    )
-            )
-
-            // Price Badge
-            Surface(
-                modifier = Modifier.padding(16.dp).align(Alignment.TopEnd),
-                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.9f),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text(
-                    text = event.price ?: "Free",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = event.title ?: "", 
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), 
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Schedule, null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = formattedDate, 
-                        style = MaterialTheme.typography.bodySmall, 
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EventListItem(event: Event, onClick: () -> Unit) {
-    val formattedDate = remember(event.date) { formatIsoDate(event.date) }
-    
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current).data(event.imageUrl).crossfade(true).build(),
-                contentDescription = null, 
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = formattedDate.uppercase(), 
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    ),
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = event.title ?: "", 
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.LocationOn, 
-                        contentDescription = null, 
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = event.location ?: "", 
-                        style = MaterialTheme.typography.bodySmall, 
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            
-            Icon(
-                Icons.Default.ChevronRight, 
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-            )
-        }
-    }
-}
-
 fun formatIsoDate(isoString: String?): String {
     if (isoString.isNullOrBlank()) return "TBA"
     return try {
-        // SimpleDateFormat is compatible with API 24
         val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.ENGLISH)
         val outputFormat = SimpleDateFormat("EEE, d MMM • h:mm a", Locale.ENGLISH)
         val date = inputFormat.parse(isoString)
         date?.let { outputFormat.format(it) } ?: isoString
     } catch (e: Exception) {
-        // Fallback for different ISO formats
         try {
             val date = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
@@ -588,23 +1045,29 @@ fun HomeSkeleton() {
         label = "alpha"
     )
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        Box(Modifier.fillMaxWidth(0.5f).height(40.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(8.dp)))
-        Spacer(Modifier.height(8.dp))
-        Box(Modifier.fillMaxWidth(0.7f).height(20.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(4.dp)))
-        
-        Spacer(Modifier.height(32.dp))
-        
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            items(2) {
-                Box(Modifier.width(300.dp).height(220.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(24.dp)))
+    Column(modifier = Modifier.padding(20.dp)) {
+        Box(Modifier.fillMaxWidth().height(400.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(28.dp)))
+
+        Spacer(Modifier.height(24.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            repeat(3) {
+                Box(Modifier.weight(1f).height(90.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(20.dp)))
             }
         }
-        
+
         Spacer(Modifier.height(32.dp))
-        
-        repeat(5) {
-            Box(Modifier.fillMaxWidth().height(100.dp).padding(vertical = 8.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(16.dp)))
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            items(3) {
+                Box(Modifier.width(280.dp).height(180.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(20.dp)))
+            }
+        }
+
+        Spacer(Modifier.height(32.dp))
+
+        repeat(4) {
+            Box(Modifier.fillMaxWidth().height(110.dp).padding(vertical = 6.dp).background(Color.LightGray.copy(alpha = alpha), RoundedCornerShape(20.dp)))
         }
     }
 }
