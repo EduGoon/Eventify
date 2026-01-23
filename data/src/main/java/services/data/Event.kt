@@ -7,5 +7,6 @@ data class Event(
     val location: String? = "",
     val price: String? = "",
     val url: String? = "",
-    val about: String? = ""
+    val about: String? = "",
+    val category: String? = ""
 )

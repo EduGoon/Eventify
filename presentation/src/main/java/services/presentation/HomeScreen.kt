@@ -42,6 +42,21 @@ import java.util.*
 import kotlin.text.format
 import kotlin.text.uppercase
 
+private val categoryMapping = mapOf(
+    "All" to "All",
+    "Music" to "Music",
+    "Arts" to "Performing & Visual Arts",
+    "Business" to "Business & Professional",
+    "Food" to "Food & Drink",
+    "Culture" to "Community & Culture",
+    "Holiday" to "Seasonal & Holiday",
+    "Health" to "Health & Wellness",
+    "Sports" to "Sports & Fitness",
+    "Travel" to "Travel & Outdoor",
+    "Tech" to "Tech",
+    "Other" to "Other"
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -53,8 +68,17 @@ fun HomeScreen(
     var fullScreenImageUrl by remember { mutableStateOf<String?>(null) }
     var selectedCategory by remember { mutableStateOf("All") }
 
-    val categories = listOf("All", "Music", "Tech", "Sports", "Art", "Food", "Business")
+    val categories = categoryMapping.keys.toList()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+    val filteredEvents = remember(events, selectedCategory) {
+        if (selectedCategory == "All") {
+            events
+        } else {
+            val canonicalName = categoryMapping[selectedCategory]
+            events.filter { it.category == canonicalName }
+        }
+    }
 
     // Filter sheet
     if (showFilterSheet) {
@@ -188,156 +212,204 @@ fun HomeScreen(
         ) {
             if (events.isEmpty()) {
                 item { HomeSkeleton() }
-            } else {
-                // Hero Event (Biggest featured event)
+            } else if (filteredEvents.isEmpty()) {
                 item {
-                    HeroEventCard(
-                        event = events.firstOrNull() ?: return@item,
-                        onClick = { selectedEvent = events.firstOrNull() }
-                    )
-                }
-
-                // Quick stats or promotional banner
-                item {
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .fillParentMaxSize()
+                            .padding(20.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        StatCard(
-                            icon = Icons.Default.Event,
-                            count = "${events.size}+",
-                            label = "Events",
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            icon = Icons.Default.LocationOn,
-                            count = "5",
-                            label = "Cities",
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            icon = Icons.Default.Star,
-                            count = "4.8",
-                            label = "Rating",
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                // Trending Events - Horizontal scroll
-                item {
-                    Column(modifier = Modifier.padding(top = 8.dp)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    "🔥 Trending Now",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                                Text(
-                                    "Don't miss these hot events",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        ) {
-                            items(events.take(5)) { event ->
-                                TrendingEventCard(event = event, onClick = { selectedEvent = event })
-                            }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                Icons.Default.EventBusy,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                "No $selectedCategory events found",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
+            } else {
+                if (selectedCategory == "All") {
+                    // FULL HOMEPAGE LAYOUT
+                    item {
+                        HeroEventCard(
+                            event = filteredEvents.firstOrNull() ?: return@item,
+                            onClick = { selectedEvent = filteredEvents.firstOrNull() }
+                        )
+                    }
 
-                // This Weekend Section
-                item {
-                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                    item {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column {
-                                Text(
-                                    "This Weekend",
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                                )
-                                Text(
-                                    "Plan your perfect weekend",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            StatCard(
+                                icon = Icons.Default.Event,
+                                count = "${filteredEvents.size}+",
+                                label = "Events",
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                icon = Icons.Default.LocationOn,
+                                count = "5",
+                                label = "Cities",
+                                modifier = Modifier.weight(1f)
+                            )
+                            StatCard(
+                                icon = Icons.Default.Star,
+                                count = "4.8",
+                                label = "Rating",
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    item {
+                        Column(modifier = Modifier.padding(top = 8.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        "🔥 Trending Now",
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                    Text(
+                                        "Don't miss these hot events",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                            TextButton(onClick = { }) {
-                                Text("See all")
-                                Icon(Icons.Default.ChevronRight, null, modifier = Modifier.size(16.dp))
+
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 20.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                items(filteredEvents.take(5)) { event ->
+                                    TrendingEventCard(event = event, onClick = { selectedEvent = event })
+                                }
                             }
                         }
+                    }
 
-                        // Two column grid
-                        val weekendEvents = events.drop(1).take(4)
-                        Column(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            weekendEvents.chunked(2).forEach { rowEvents ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    rowEvents.forEach { event ->
-                                        CompactEventCard(
-                                            event = event,
-                                            onClick = { selectedEvent = event },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                    }
-                                    if (rowEvents.size == 1) {
-                                        Spacer(modifier = Modifier.weight(1f))
+                    item {
+                        Column(modifier = Modifier.padding(top = 8.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        "More Discoveries",
+                                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                    Text(
+                                        "Handpicked for you",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+
+                            val discoveryEvents = filteredEvents.drop(1).take(4)
+                            Column(
+                                modifier = Modifier.padding(horizontal = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                discoveryEvents.chunked(2).forEach { rowEvents ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        rowEvents.forEach { event ->
+                                            CompactEventCard(
+                                                event = event,
+                                                onClick = { selectedEvent = event },
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        if (rowEvents.size == 1) {
+                                            Spacer(modifier = Modifier.weight(1f))
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                // All Events List
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "All Events",
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                        )
-                        TextButton(onClick = { showFilterSheet = true }) {
-                            Icon(Icons.Default.FilterList, null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Filter")
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "All Events",
+                                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                            )
+                            TextButton(onClick = { showFilterSheet = true }) {
+                                Icon(Icons.Default.FilterList, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Filter")
+                            }
                         }
                     }
-                }
 
-                items(events.drop(5)) { event ->
-                    ModernEventListItem(event = event, onClick = { selectedEvent = event })
+                    items(filteredEvents.drop(5)) { event ->
+                        ModernEventListItem(event = event, onClick = { selectedEvent = event })
+                    }
+                } else {
+                    // CATEGORY SPECIFIC LAYOUT (Only list of events)
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "$selectedCategory Events",
+                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = "${filteredEvents.size}",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    items(filteredEvents) { event ->
+                        ModernEventListItem(event = event, onClick = { selectedEvent = event })
+                    }
                 }
 
                 item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -753,7 +825,7 @@ fun ModernEventListItem(event: Event, onClick: () -> Unit) {
 @Composable
 fun FilterSheetContent(onDismiss: () -> Unit) {
     val locations = listOf("All", "Nairobi", "Mombasa", "Kisumu", "Nakuru", "International")
-    val eventTypes = listOf("All", "Music", "Tech", "Sports", "Art", "Food", "Business")
+    val eventCategories = categoryMapping.keys.toList()
     val priceRanges = listOf("All", "Free", "Under KES 1000", "KES 1000-5000", "Above KES 5000")
 
     var selectedLocation by remember { mutableStateOf("All") }
@@ -788,7 +860,7 @@ fun FilterSheetContent(onDismiss: () -> Unit) {
         Text("Category", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
         Spacer(modifier = Modifier.height(12.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(eventTypes) { type ->
+            items(eventCategories) { type ->
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { selectedType = type },
@@ -833,7 +905,6 @@ fun FilterSheetContent(onDismiss: () -> Unit) {
     }
 }
 
-// Keep the existing helper functions and EventDetailContent
 @Composable
 fun EventDetailContent(event: Event, onImageClick: (String) -> Unit) {
     val uriHandler = LocalUriHandler.current
